@@ -1,15 +1,15 @@
 package com.google.allenday.popgen.post_processing;
 
-import com.google.allenday.genomics.core.csv.ParseSourceCsvTransform;
 import com.google.allenday.genomics.core.model.FileWrapper;
-import com.google.allenday.genomics.core.model.SampleMetaData;
+import com.google.allenday.genomics.core.model.SampleRunMetaData;
 import com.google.allenday.genomics.core.model.SraSampleId;
-import com.google.allenday.genomics.core.parts_processing.*;
 import com.google.allenday.genomics.core.pipeline.PipelineSetupUtils;
+import com.google.allenday.genomics.core.pipeline.batch.partsprocessing.*;
+import com.google.allenday.genomics.core.preparing.RetrieveFastqFromCsvTransform;
 import com.google.allenday.genomics.core.processing.align.AlignFn;
-import com.google.allenday.genomics.core.processing.index.CreateBamIndexFn;
-import com.google.allenday.genomics.core.processing.merge.MergeFn;
-import com.google.allenday.genomics.core.processing.sort.SortFn;
+import com.google.allenday.genomics.core.processing.sam.index.CreateBamIndexFn;
+import com.google.allenday.genomics.core.processing.sam.merge.MergeFn;
+import com.google.allenday.genomics.core.processing.sam.sort.SortFn;
 import com.google.allenday.genomics.core.processing.variantcall.VariantCallingFn;
 import com.google.allenday.genomics.core.utils.NameProvider;
 import com.google.cloud.storage.BlobId;
@@ -68,8 +68,8 @@ public class PopGenPostProcessingApp {
                     .apply(injector.getInstance(VcfToBqBatchTransform.class));
         } else {
 
-            PCollection<KV<SampleMetaData, List<FileWrapper>>> parsedData = pipeline
-                    .apply("Parse data", injector.getInstance(ParseSourceCsvTransform.class));
+            PCollection<KV<SampleRunMetaData, List<FileWrapper>>> parsedData = pipeline
+                    .apply("Parse data", injector.getInstance(RetrieveFastqFromCsvTransform.class));
 
             if (pipelineOptions.getPostProcessingType() == PostProcessingType.FINALIZE_ALIGN) {
                 parsedData.apply(ParDo.of(injector.getInstance(PrepareAlignNotProcessedFn.class)))
@@ -96,9 +96,9 @@ public class PopGenPostProcessingApp {
             } else if (pipelineOptions.getPostProcessingType() == PostProcessingType.ANALYZE_COMPLETION_STATUS) {
                 parsedData
                         .apply(MapElements.into(TypeDescriptors.kvs(TypeDescriptor.of(SraSampleId.class),
-                                TypeDescriptors.kvs(TypeDescriptor.of(SampleMetaData.class),
+                                TypeDescriptors.kvs(TypeDescriptor.of(SampleRunMetaData.class),
                                         TypeDescriptors.lists(TypeDescriptor.of(FileWrapper.class)))))
-                                .via((KV<SampleMetaData, List<FileWrapper>> kvInput) ->
+                                .via((KV<SampleRunMetaData, List<FileWrapper>> kvInput) ->
                                         KV.of(Objects.requireNonNull(kvInput.getKey()).getSraSample(),
                                                 KV.of(kvInput.getKey(), kvInput.getValue()))))
                         .apply(GroupByKey.create())
@@ -114,11 +114,12 @@ public class PopGenPostProcessingApp {
         }
     }
 
-    public static class GroupBySraSample extends PTransform<PCollection<KV<SampleMetaData, List<FileWrapper>>>, PCollection<KV<SraSampleId, Iterable<SampleMetaData>>>> {
+    public static class GroupBySraSample extends PTransform<PCollection<KV<SampleRunMetaData, List<FileWrapper>>>,
+            PCollection<KV<SraSampleId, Iterable<SampleRunMetaData>>>> {
         @Override
-        public PCollection<KV<SraSampleId, Iterable<SampleMetaData>>> expand(PCollection<KV<SampleMetaData, List<FileWrapper>>> input) {
-            return input.apply(MapElements.into(TypeDescriptors.kvs(TypeDescriptor.of(SraSampleId.class), TypeDescriptor.of(SampleMetaData.class)))
-                    .via((KV<SampleMetaData, List<FileWrapper>> kvInput) -> KV.of(Objects.requireNonNull(kvInput.getKey()).getSraSample(), kvInput.getKey())))
+        public PCollection<KV<SraSampleId, Iterable<SampleRunMetaData>>> expand(PCollection<KV<SampleRunMetaData, List<FileWrapper>>> input) {
+            return input.apply(MapElements.into(TypeDescriptors.kvs(TypeDescriptor.of(SraSampleId.class), TypeDescriptor.of(SampleRunMetaData.class)))
+                    .via((KV<SampleRunMetaData, List<FileWrapper>> kvInput) -> KV.of(Objects.requireNonNull(kvInput.getKey()).getSraSample(), kvInput.getKey())))
                     .apply(GroupByKey.create());
         }
     }

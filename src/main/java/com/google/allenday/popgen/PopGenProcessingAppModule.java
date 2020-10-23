@@ -1,15 +1,12 @@
 package com.google.allenday.popgen;
 
-import com.google.allenday.genomics.core.batch.BatchProcessingModule;
-import com.google.allenday.genomics.core.batch.BatchProcessingPipelineOptions;
-import com.google.allenday.genomics.core.batch.PreparingTransform;
-import com.google.allenday.genomics.core.io.BaseUriProvider;
-import com.google.allenday.genomics.core.io.DefaultBaseUriProvider;
-import com.google.allenday.genomics.core.io.FileUtils;
 import com.google.allenday.genomics.core.pipeline.GenomicsProcessingParams;
-import com.google.allenday.genomics.core.utils.NameProvider;
-import com.google.allenday.popgen.anomaly.DetectAnomalyTransform;
-import com.google.allenday.popgen.anomaly.RecognizePairedReadsWithAnomalyFn;
+import com.google.allenday.genomics.core.pipeline.batch.BatchProcessingModule;
+import com.google.allenday.genomics.core.pipeline.batch.BatchProcessingPipelineOptions;
+import com.google.allenday.genomics.core.preparing.anomaly.DetectMissedFilesAndUnsupportedInstrumentTransform;
+import com.google.allenday.genomics.core.preparing.custom.FastqInputResourcePreparingTransform;
+import com.google.allenday.genomics.core.preparing.runfile.uriprovider.BaseUriProvider;
+import com.google.allenday.genomics.core.preparing.runfile.uriprovider.DefaultBaseUriProvider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
@@ -50,20 +47,13 @@ public class PopGenProcessingAppModule extends BatchProcessingModule {
         );
     }
 
-    @Provides
-    @Singleton
-    public RecognizePairedReadsWithAnomalyFn provideRecognizePairedReadsWithAnomalyFn(FileUtils fileUtils) {
-        return new RecognizePairedReadsWithAnomalyFn(srcBucket, fileUtils);
-    }
 
     @Provides
     @Singleton
-    public PreparingTransform provideGroupByPairedReadsAndFilter(RecognizePairedReadsWithAnomalyFn recognizePairedReadsWithAnomalyFn,
-                                                                 NameProvider nameProvider) {
-        return new DetectAnomalyTransform("Filter anomaly and prepare for processing", genomicsParams.getResultBucket(),
-                String.format(genomicsParams.getAnomalyOutputDirPattern(), nameProvider.getCurrentTimeInDefaultFormat()),
-                recognizePairedReadsWithAnomalyFn);
+    public FastqInputResourcePreparingTransform providePreparingTransform(DetectMissedFilesAndUnsupportedInstrumentTransform transform) {
+        return transform;
     }
+
 
     @Provides
     @Singleton

@@ -1,10 +1,9 @@
 package com.google.allenday.popgen.post_processing;
 
-import com.google.allenday.genomics.core.io.FileUtils;
-import com.google.allenday.genomics.core.io.IoUtils;
-import com.google.allenday.genomics.core.parts_processing.*;
-import com.google.allenday.genomics.core.processing.vcf_to_bq.VcfToBqFn;
+import com.google.allenday.genomics.core.export.vcftobq.VcfToBqFn;
+import com.google.allenday.genomics.core.pipeline.batch.partsprocessing.*;
 import com.google.allenday.genomics.core.reference.ReferenceProvider;
+import com.google.allenday.genomics.core.utils.FileUtils;
 import com.google.allenday.genomics.core.utils.NameProvider;
 import com.google.allenday.popgen.PopGenProcessingAppModule;
 import com.google.inject.Provides;
@@ -48,10 +47,10 @@ public class FinalizePopGenProcessingAppModule extends PopGenProcessingAppModule
 
     @Provides
     @Singleton
-    public VcfToBqBatchTransform.PrepareVcfToBqBatchFn providePrepareVcfToBqBatchFn(FileUtils fileUtils, IoUtils ioUtils,
+    public VcfToBqBatchTransform.PrepareVcfToBqBatchFn providePrepareVcfToBqBatchFn(FileUtils fileUtils,
                                                                                     StagingPathsBulder stagingPathsBulder,
                                                                                     NameProvider nameProvider) {
-        return new VcfToBqBatchTransform.PrepareVcfToBqBatchFn(fileUtils, ioUtils, stagingPathsBulder,
+        return new VcfToBqBatchTransform.PrepareVcfToBqBatchFn(fileUtils, stagingPathsBulder,
                 nameProvider.getCurrentTimeInDefaultFormat(),
                 String.format(genomicsParams.getVcfToBqOutputDirPattern(), nameProvider.getCurrentTimeInDefaultFormat()),
                 vcfToBqBatchSize);
@@ -60,10 +59,9 @@ public class FinalizePopGenProcessingAppModule extends PopGenProcessingAppModule
 
     @Provides
     @Singleton
-    public VcfToBqBatchTransform.SaveVcfToBqResults provideSaveVcfToBqResults(IoUtils ioUtils,
-                                                                              StagingPathsBulder stagingPathsBulder,
+    public VcfToBqBatchTransform.SaveVcfToBqResults provideSaveVcfToBqResults(StagingPathsBulder stagingPathsBulder,
                                                                               FileUtils fileUtils) {
-        return new VcfToBqBatchTransform.SaveVcfToBqResults(stagingPathsBulder, ioUtils, fileUtils);
+        return new VcfToBqBatchTransform.SaveVcfToBqResults(stagingPathsBulder, fileUtils);
     }
 
     @Provides
@@ -104,7 +102,7 @@ public class FinalizePopGenProcessingAppModule extends PopGenProcessingAppModule
 
     @Provides
     @Singleton
-    public CheckExistenceFn provideCheckExistenceFn(FileUtils fileUtils, IoUtils ioUtils, StagingPathsBulder stagingPathsBulder) {
-        return new CheckExistenceFn(fileUtils, ioUtils, genomicsParams.getGeneReferences(), stagingPathsBulder);
+    public CheckExistenceFn provideCheckExistenceFn(FileUtils fileUtils, StagingPathsBulder stagingPathsBulder) {
+        return new CheckExistenceFn(fileUtils, genomicsParams.getGeneReferences(), stagingPathsBulder);
     }
 }

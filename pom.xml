@@ -6,7 +6,7 @@
 
     <groupId>com.google.allenday.popgen</groupId>
     <artifactId>gcp-popgen</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
 
     <name>gcp-popgen</name>
 
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>com.google.allenday</groupId>
             <artifactId>genomics-dataflow-core</artifactId>
-            <version>0.0.17</version>
+            <version>0.1.4</version>
         </dependency>
         <!--output-->
         <dependency>

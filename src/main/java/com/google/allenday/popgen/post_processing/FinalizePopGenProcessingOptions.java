@@ -1,6 +1,6 @@
 package com.google.allenday.popgen.post_processing;
 
-import com.google.allenday.genomics.core.batch.BatchProcessingPipelineOptions;
+import com.google.allenday.genomics.core.pipeline.batch.BatchProcessingPipelineOptions;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.Validation;
